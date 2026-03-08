@@ -1,0 +1,9 @@
+#
+# Drivers folder CMakeLists
+#
+
+# Serial Comms child CMakeLists
+add_subdirectory(serial)
+
+# Interrupt Controller child CMakeLists
+add_subdirectory(interrupt_controller)

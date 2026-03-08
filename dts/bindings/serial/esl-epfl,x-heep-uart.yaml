@@ -1,0 +1,13 @@
+# author: rbatal (rodrigo.batal@gmail.com)
+
+description: >
+  X-HEEP UART Controller (OpenTitan-based).
+  Note: Register layout differs from the Zephyr libraries (lowrisc,opentitan-uart), different register layout.
+
+compatible: "esl-epfl,x-heep-uart"
+
+include: [uart-controller.yaml]
+
+properties:
+  reg:
+    required: true

@@ -1,0 +1,117 @@
+/*
+ * author: rbatal (rodrigo.batal@gmail.com)
+ *
+ * X-HEEP Devicetree for Zephyr RTOS (core-agnostic)
+ *  Applies to all X-HEEP core variants: cv32e20p, cv32e40p, cv32e40x, cv32e40px
+ *
+ * Notes:
+ *  1 - Custom OpenTitan UART driver (differs from the one in Zephyr sources)
+ *  2 - Custom OpenTitan PLIC driver (none available in Zephyr sources)
+ */
+
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+	compatible = "x-heep";
+	model = "X-HEEP";
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		cpu0: cpu@0 {
+			device_type = "cpu";
+			compatible = "riscv";
+			reg = <0>;
+			riscv,isa = "rv32i_zicsr";
+			mmu-type = "riscv,none";
+			clock-frequency = <100000000>;
+			status = "okay";
+
+			hlic: interrupt-controller {
+				compatible = "riscv,cpu-intc";
+				#address-cells = <0>;
+				#interrupt-cells = <1>;
+				interrupt-controller;
+			};
+		};
+	};
+
+	sram0: memory@0 {
+		device_type = "memory";
+		compatible = "mmio-sram";
+		reg = <0x00000000 0x20000>;  /* 128KB */
+	};
+
+	soc {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "simple-bus";
+		ranges;
+
+		/*
+		 * Machine Timer (Always-On domain)
+		 * LowRISC rv_timer @ 0x20050000
+		 */
+		mtimer: timer@20050104 {
+			compatible = "riscv,machine-timer";
+			reg = <0x20050104 0x8>,   /* mtime */
+			      <0x2005010c 0x8>;   /* mtimecmp */
+			reg-names = "mtime", "mtimecmp";
+			interrupts-extended = <&hlic 7>;
+		};
+
+		/*
+		 * PLIC - OpenTitan rv_plic @ 0x30000000
+		 *
+		 * Driven by the custom esl-epfl,x-heep-plic driver which uses
+		 * the following register map:
+		 *   Priority  base + 0x010  (stride 4 per source)
+		 *   IE        base + 0x200
+		 *   Threshold base + 0x208
+		 *   CC        base + 0x20C
+		 */
+		plic: interrupt-controller@30000000 {
+			compatible = "esl-epfl,x-heep-plic";
+			reg = <0x30000000 0x00010000>;
+			#address-cells = <0>;
+			#interrupt-cells = <2>;
+			interrupt-controller;
+			interrupts-extended = <&hlic 11>;
+			riscv,ndev = <64>;
+			riscv,max-priority = <7>;
+			status = "okay";
+		};
+
+		/*
+		 * UART - OpenTitan UART at 0x30080000
+		 * Using polling mode (no interrupts until PLIC driver implemented)
+		 */
+		uart0: serial@30080000 {
+			compatible = "esl-epfl,x-heep-uart";
+			reg = <0x30080000 0x40>;
+			clock-frequency = <100000000>;
+			current-speed = <256000>;
+			/* No interrupt-parent since PLIC is disabled */
+			status = "okay";
+		};
+
+		/*
+		 * GPIO Controller (disabled for now)
+		 */
+		gpio0: gpio@30020000 {
+			compatible = "lowrisc,opentitan-gpio";
+			reg = <0x30020000 0x40>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <32>;
+			status = "disabled";
+		};
+	};
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,console = &uart0;
+		zephyr,shell-uart = &uart0;
+	};
+};

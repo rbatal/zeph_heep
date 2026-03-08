@@ -1,0 +1,10 @@
+# 
+# X-HEEP SoCs Definition
+#
+
+family:
+  - name: x_heep
+    series:
+      - name: x_heep
+        socs:
+          - name: x_heep

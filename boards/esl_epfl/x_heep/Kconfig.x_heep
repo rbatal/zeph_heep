@@ -1,0 +1,6 @@
+#
+# X-HEEP Board Kconfig
+#
+
+config BOARD_X_HEEP
+	select SOC_X_HEEP

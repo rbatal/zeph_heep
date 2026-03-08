@@ -1,0 +1,36 @@
+# author: rbatal (rodrigo.batal@gmail.com)
+
+description: >
+  X-HEEP PLIC Controller (OpenTitan-based).
+  Note: No simmilar peripheral driver in Zephyr libraries available.
+
+compatible: "esl-epfl,x-heep-plic"
+
+include:
+  - name: base.yaml
+
+interrupt-cells:
+  - irq
+  - priority
+
+properties:
+  reg:
+    required: true
+
+  riscv,ndev:
+    type: int
+    required: true
+    description: Number of external interrupt sources supported by the PLIC.
+
+  riscv,max-priority:
+    type: int
+    required: true
+    description: Maximum interrupt priority level (inclusive).
+
+  "#interrupt-cells":
+    type: int
+    const: 2
+
+  interrupt-controller:
+    type: boolean
+    description: Marks this node as an interrupt controller.

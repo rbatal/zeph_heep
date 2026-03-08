@@ -1,0 +1,10 @@
+# 
+# X-HEEP Board Definition
+#
+
+board:
+  name: x_heep
+  full_name: X-HEEP "Chip"
+  vendor: esl_epfl
+  socs:
+    - name: x_heep

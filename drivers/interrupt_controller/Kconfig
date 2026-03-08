@@ -1,0 +1,15 @@
+#
+# Interrupt Controller Kconfig
+#
+
+config X_HEEP_PLIC
+	bool "X-HEEP OpenTitan rv_plic"
+	default y
+	depends on DT_HAS_ESL_EPFL_X_HEEP_PLIC_ENABLED
+	select RISCV_HAS_PLIC
+	select MULTI_LEVEL_INTERRUPTS
+	select 2ND_LEVEL_INTERRUPTS
+	help
+	  Enable the X-HEEP PLIC driver (official OpenTitan).
+	  This driver exports the riscv_plic_* API expected by the RISC-V architecture layer.
+	  To be completed.

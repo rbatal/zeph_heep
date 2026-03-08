@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+# X-HEEP Zephyr Module Root Kconfig
+
+# This file is required by module.yml
+# It sources the SoC Kconfig hierarchy
+
+rsource "soc/x_heep/Kconfig"
+rsource "drivers/Kconfig"

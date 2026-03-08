@@ -1,0 +1,9 @@
+#
+# Drivers folder Kconfig
+#
+
+# Serial Comms child Kconfig
+rsource "serial/Kconfig"
+
+# Interrupt Controller child Kconfig
+rsource "interrupt_controller/Kconfig"

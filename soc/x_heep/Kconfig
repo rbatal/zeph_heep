@@ -1,0 +1,15 @@
+# 
+# X-HEEP SoC Family Kconfig
+#
+
+config SOC_FAMILY_X_HEEP
+	bool
+
+config SOC_FAMILY
+	default "x_heep" if SOC_FAMILY_X_HEEP
+
+rsource "Kconfig.soc"
+
+if SOC_X_HEEP
+rsource "Kconfig.defconfig"
+endif

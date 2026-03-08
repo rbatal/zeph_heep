@@ -1,0 +1,11 @@
+#
+# Serial Comms Kconfig
+#
+
+config UART_X_HEEP
+	bool "X-HEEP UART"
+	default y
+	depends on DT_HAS_ESL_EPFL_X_HEEP_UART_ENABLED
+	select SERIAL_HAS_DRIVER
+	help
+	  Enable X-HEEP UART driver (official OpenTitan, differs from Zephyr libs).

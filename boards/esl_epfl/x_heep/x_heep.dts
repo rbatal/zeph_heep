@@ -1,0 +1,17 @@
+/*
+ * X-HEEP Board DTS
+ */
+/dts-v1/;
+
+#include <x_heep/x_heep.dtsi>
+
+/ {
+	model = "X-HEEP Board";
+	compatible = "x-heep";
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,console = &uart0;
+		zephyr,shell-uart = &uart0;
+	};
+};
