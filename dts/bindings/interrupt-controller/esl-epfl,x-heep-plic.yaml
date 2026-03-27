@@ -1,36 +1,53 @@
 # author: rbatal (rodrigo.batal@gmail.com)
 
-description: >
-  X-HEEP PLIC Controller (OpenTitan-based).
-  Note: No simmilar peripheral driver in Zephyr libraries available.
+description: |
+  X-HEEP Platform-Level Interrupt Controller (PLIC)
+
+  Based on the lowRISC/OpenTitan rv_plic IP with a compact
+  (non-spec-compliant) register layout. 64 sources, 1 target,
+  3-bit priority (0-7), level/edge configurable per source.
+
+  Register map (from base):
+    0x000-0x004  IP           (pending, 2x32-bit)
+    0x008-0x00C  LE           (level/edge mode, 2x32-bit)
+    0x010-0x10C  PRIO         (64 source priorities, 3-bit each)
+    0x200-0x204  IE0          (enable for target 0, 2x32-bit)
+    0x208        THRESHOLD0
+    0x20C        CC0          (claim/complete)
+    0x210        MSIP0
 
 compatible: "esl-epfl,x-heep-plic"
 
-include:
-  - name: base.yaml
-
-interrupt-cells:
-  - irq
-  - priority
+include: [interrupt-controller.yaml, base.yaml]
 
 properties:
   reg:
     required: true
+    description: Base address and size of the PLIC register space.
 
-  riscv,ndev:
-    type: int
+  "#interrupt-cells":
     required: true
-    description: Number of external interrupt sources supported by the PLIC.
+    const: 2
+    description: |
+      Cell 0: IRQ number (PLIC source ID, 1-63)
+      Cell 1: IRQ priority (1-7, 0 = disabled)
 
   riscv,max-priority:
     type: int
     required: true
-    description: Maximum interrupt priority level (inclusive).
+    description: Maximum priority value supported (7 for X-HEEP).
 
-  "#interrupt-cells":
+  riscv,ndev:
     type: int
-    const: 2
+    required: true
+    description: Number of external interrupt sources (64 for X-HEEP).
 
-  interrupt-controller:
-    type: boolean
-    description: Marks this node as an interrupt controller.
+  interrupts-extended:
+    required: true
+    description: |
+      Connection to CPU interrupt controller.
+      Should be <&hlic 11> for machine external interrupt.
+
+interrupt-cells:
+  - irq
+  - priority

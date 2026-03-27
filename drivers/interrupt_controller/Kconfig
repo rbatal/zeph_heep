@@ -2,14 +2,19 @@
 # Interrupt Controller Kconfig
 #
 
-config X_HEEP_PLIC
-	bool "X-HEEP OpenTitan rv_plic"
-	default y
-	depends on DT_HAS_ESL_EPFL_X_HEEP_PLIC_ENABLED
-	select RISCV_HAS_PLIC
-	select MULTI_LEVEL_INTERRUPTS
-	select 2ND_LEVEL_INTERRUPTS
-	help
-	  Enable the X-HEEP PLIC driver (official OpenTitan).
-	  This driver exports the riscv_plic_* API expected by the RISC-V architecture layer.
-	  To be completed.
+config XHEEP_PLIC
+  bool "X-HEEP Platform-Level Interrupt Controller"
+  default y
+  depends on RISCV_HAS_PLIC
+  depends on !PLIC
+  select MULTI_LEVEL_INTERRUPTS
+  select 2ND_LEVEL_INTERRUPTS
+  help
+    Custom PLIC driver for the X-HEEP platform.
+    The lowRISC/OpenTitan rv_plic in X-HEEP uses a compact
+    register layout that is NOT compatible with the standard
+    RISC-V PLIC memory map expected by Zephyr's built-in
+    intc_plic.c driver.
+
+    This driver provides the riscv_plic_* API using the correct
+    compact register offsets.

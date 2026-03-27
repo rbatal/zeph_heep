@@ -3,24 +3,28 @@
 #
 
 config SOC_SERIES_X_HEEP
-	bool
-	select SOC_FAMILY_X_HEEP
-	help
-	  X-HEEP RISC-V SoC series
+  bool
+  select SOC_FAMILY_X_HEEP
+  help
+    X-HEEP RISC-V SoC series
 
 config SOC_X_HEEP
-	bool
-	select SOC_SERIES_X_HEEP
-	select RISCV
-	select RISCV_ISA_RV32I
-	select RISCV_ISA_EXT_ZICSR
-	select RISCV_PRIVILEGED
-	# NOTE: Do NOT select RISCV_HAS_PLIC - X-HEEP uses OpenTitan rv_plic
-	# which has a different register layout than the SiFive PLIC driver.
-	# M and C extensions are intentionally omitted: all X-HEEP cores support
-	# them, but targeting bare RV32I keeps the port core-agnostic.
-	help
-	  X-HEEP platform SoC. Targets the common RV32I subset (supported by all X-HEEP cores, obviously).
+  bool
+  select SOC_SERIES_X_HEEP
+  select RISCV
+  select RISCV_ISA_RV32I
+  select RISCV_ISA_EXT_ZICSR
+  select RISCV_PRIVILEGED
+  select RISCV_HAS_PLIC
+  # Selected RISCV_HAS_PLIC so that Zephyr's arch layer calls the
+  # riscv_plic_* API for multi-level interrupt management.
+  # The UPSTREAM intc_plic.c driver (CONFIG_PLIC) is suppressed in
+  # Kconfig.defconfig, our custom XHEEP_PLIC driver provides the
+  # riscv_plic_* symbols with the correct register offsets.
+  help
+    X-HEEP platform SoC. Targets the common RV32I subset
+    (supported by all X-HEEP cores).
 
 config SOC
-	default "x_heep" if SOC_X_HEEP
+  default "x_heep" if SOC_X_HEEP
+  

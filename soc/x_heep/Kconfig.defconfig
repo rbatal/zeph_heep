@@ -1,4 +1,4 @@
-# 
+#
 # X-HEEP SoC Kconfig defaults
 #
 
@@ -8,67 +8,70 @@ if SOC_X_HEEP
 # Clock Configuration
 # ============================================================
 config SYS_CLOCK_HW_CYCLES_PER_SEC
-	default 100000000
+  default 100000000
 
 # ============================================================
 # Interrupt Configuration
 # ============================================================
 
-# With X_HEEP_PLIC enabled, the SW ISR table needs slots for both:
-#   - L1 IRQs: RISC-V M-mode has 12 interrupt inputs (mip bits 0-11)
-#               (bit-11 actually corresponds to external interrupts)
-#   - L2 IRQs: 64 PLIC sources
-# Total = 12 + 64 = 76; use 96 for a small margin.
+# CRITICAL: Suppress Zephyr's built-in SiFive PLIC driver.
+# The upstream intc_plic.c hardcodes the standard PLIC register offsets
+# which do NOT match the X-HEEP OpenTitan rv_plic compact layout.
+# Our custom driver (XHEEP_PLIC) provides the riscv_plic_* symbols.
+config PLIC
+  default n
+
+# SW ISR table needs slots for:
+#   - L1: 12 RISC-V M-mode interrupt inputs (mip bits 0-11)
+#   - L2: 64 PLIC sources
+# Total = 12 + 64 = 76; use 96 for margin.
 config NUM_IRQS
-	default 96 if X_HEEP_PLIC
-	default 64
+  default 96 if XHEEP_PLIC
+  default 64
 
-# Must hold all PLIC sources (64) for the 2nd level aggregator table.
+# Max sources per 2nd-level aggregator.
 config MAX_IRQ_PER_AGGREGATOR
-	default 64 if X_HEEP_PLIC
+  default 64 if XHEEP_PLIC
 
-# L1 IRQ line the first PLIC is connected to.
-# On RISC-V this is always the machine external interrupt = 11.
-# Used by irq_parent_level_2() so that the IRQ parent table lookup in
-# z_get_sw_isr_table_idx() can match intc->irq against the encoded parent.
+# L2 ISR table starts after the 12 L1 entries.
+config 2ND_LVL_ISR_TBL_OFFSET
+  default 12 if XHEEP_PLIC
+
+# L1 IRQ line the PLIC is connected to (Machine External Interrupt = 11).
 config 2ND_LVL_INTR_00_OFFSET
-	default 11 if X_HEEP_PLIC
+  default 11 if XHEEP_PLIC
 
 config GEN_ISR_TABLES
-	default y
+  default y
 
 config GEN_IRQ_VECTOR_TABLE
-	default n
+  default n
 
 config GEN_SW_ISR_TABLE
-	default y
+  default y
 
 # ============================================================
 # Stack Configuration
 # ============================================================
 config MAIN_STACK_SIZE
-	default 2048
+  default 2048
 
 config ISR_STACK_SIZE
-	default 2048
+  default 2048
 
 config IDLE_STACK_SIZE
-	default 512
+  default 512
 
 # ============================================================
 # Memory Configuration
 # ============================================================
 config XIP
-	default n
+  default n
 
 # ============================================================
 # Timer
 # ============================================================
 config RISCV_MACHINE_TIMER
-	default y
-
-# PLIC: the custom (esl-epfl,x-heep-plic driver) (CONFIG_X_HEEP_PLIC) is
-# enabled when the DT node is "okay". The upstream SiFive PLIC driver
-# (CONFIG_PLIC) is kept off EXPLICITLY in the board defconfig.
+  default y
 
 endif # SOC_X_HEEP

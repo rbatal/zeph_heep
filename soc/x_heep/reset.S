@@ -1,7 +1,7 @@
 /*
  * author: rbatal (rodrigo.batal@gmail.com)
  *
- * X-HEEP CV32E40P Reset Handler
+ * X-HEEP Reset Handler
  *
  * Includes a basic test to confirm C code runs before kernel setup
  */
@@ -91,6 +91,13 @@ bss_done:
     // Now try z_cstart (normal Zephyr boot)
     DEBUG_CHAR '4'
     DEBUG_CHAR '\n'
+
+    // Set trap vector to Zephyr's ISR wrapper (REQUIRED for interrupts)
+    // CV32E40P requires 256-byte alignment — MODE=0 (direct mode)
+    // [The byte-alignment has been set up in /boards/esl_epfl/x_heep/x_heep_defconfig]
+    la t0, _isr_wrapper
+    csrw mtvec, t0
+
     call z_cstart
     
     // Should never get here

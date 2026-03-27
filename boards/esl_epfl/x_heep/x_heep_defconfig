@@ -29,7 +29,11 @@ CONFIG_GEN_SW_ISR_TABLE=y
 # CONFIG_MULTI_LEVEL_INTERRUPTS and CONFIG_2ND_LEVEL_INTERRUPTS are
 # automatically selected by CONFIG_X_HEEP_PLIC via its local Kconfig.
 CONFIG_PLIC=n
-CONFIG_X_HEEP_PLIC=y
+CONFIG_XHEEP_PLIC=y
+
+# At least the CV32E40P core requires 256-byte alignment of
+# its trap vector (possibly also the rest of OpenTitan cores).
+CONFIG_RISCV_TRAP_HANDLER_ALIGNMENT=256
 
 # ============================================================
 # Timer Configuration

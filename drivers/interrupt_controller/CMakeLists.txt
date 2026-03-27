@@ -2,4 +2,6 @@
 # Interrupt Controller CMakeLists
 #
 
-zephyr_library_sources_ifdef(CONFIG_X_HEEP_PLIC intc_rv_plic_opentitan.c)
+zephyr_library()
+
+zephyr_library_sources_ifdef(CONFIG_XHEEP_PLIC xheep_intc_plic.c)
