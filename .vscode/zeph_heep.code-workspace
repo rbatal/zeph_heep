@@ -2,15 +2,15 @@
 	"folders": [
     {
       "name": "zeph_heep",
-      "path": "."
+      "path": ".."
     },
     {
       "name": "zephyr",
-      "path": "../../tools/zephyrproject/zephyr"
+      "path": "../../../tools/zephyrproject/zephyr"
     },
     {
       "name": "x-heep",
-      "path": "../../tools/x-heep"
+      "path": "../../../tools/x-heep"
     }
   ],
 	"settings": {}

@@ -1,0 +1,30 @@
+{
+    "configurations": [
+        {
+            "name": "X-HEEP Zephyr",
+            "compileCommands": "${userHome}/tools/zephyrproject/zephyr/build/compile_commands.json",
+            "includePath": [
+                "${userHome}/tools/zephyrproject/zephyr/include",
+                "${userHome}/tools/zephyrproject/zephyr/build/zephyr/include/generated",
+                "${userHome}/tools/zephyrproject/zephyr/build/zephyr/include/generated/zephyr",
+                "${workspaceFolder}/soc/x_heep",
+                "${userHome}/tools/zephyrproject/zephyr/lib/libc/common/include",
+                "${userHome}/tools/riscv/lib/gcc/riscv32-unknown-elf/12.2.0/include"
+            ],
+            "defines": [
+                "__ZEPHYR__=1",
+                "KERNEL",
+                "K_HEAP_MEM_POOL_SIZE=0",
+                "__LINUX_ERRNO_EXTENSIONS__"
+            ],
+            "forcedInclude": [
+                "${userHome}/tools/zephyrproject/zephyr/build/zephyr/include/generated/zephyr/autoconf.h",
+                "${userHome}/tools/zephyrproject/zephyr/include/zephyr/toolchain/zephyr_stdint.h"
+            ],
+            "compilerPath": "${userHome}/tools/riscv/bin/riscv32-unknown-elf-gcc",
+            "cStandard": "c99",
+            "intelliSenseMode": "gcc-arm"
+        }
+    ],
+    "version": 4
+}
