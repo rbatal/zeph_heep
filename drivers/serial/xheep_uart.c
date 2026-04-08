@@ -127,7 +127,7 @@ static DEVICE_API(uart, uart_x_heep_driver_api) = {
 //* 
 //* Instantiation macro
 //* 
-#define UART_X_HEEP_INIT(n)                                     \
+#define XHEEP_UART_INIT(n)                                      \
 	static struct uart_x_heep_config uart_x_heep_config_##n = {   \
 		.base    = DT_INST_REG_ADDR(n),                             \
 		.nco_reg = NCO_REG(DT_INST_PROP(n, current_speed),          \
@@ -138,4 +138,4 @@ static DEVICE_API(uart, uart_x_heep_driver_api) = {
 			      PRE_KERNEL_1, CONFIG_SERIAL_INIT_PRIORITY,          \
 			      &uart_x_heep_driver_api);
 
-DT_INST_FOREACH_STATUS_OKAY(UART_X_HEEP_INIT)
+DT_INST_FOREACH_STATUS_OKAY(XHEEP_UART_INIT)

@@ -2,7 +2,7 @@
 # Serial Comms Kconfig
 #
 
-config UART_X_HEEP
+config XHEEP_UART
 	bool "X-HEEP UART"
 	default y
 	depends on DT_HAS_ESL_EPFL_X_HEEP_UART_ENABLED

@@ -49,7 +49,7 @@ CONFIG_UART_CONSOLE=y
 CONFIG_SERIAL=y
 
 # Explicitly enable X-HEEP UART driver (OpenTitan-derived, not the one in Zephyr libs)
-CONFIG_UART_X_HEEP=y
+CONFIG_XHEEP_UART=y
 
 # Use polling mode (no interrupts available yet until PLIC ready)
 CONFIG_UART_INTERRUPT_DRIVEN=n

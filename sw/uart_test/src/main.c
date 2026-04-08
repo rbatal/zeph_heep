@@ -158,7 +158,7 @@ int main() {
 
   printk("\n========================================\n");
   printk("\tX-HEEP UART Verification Test\n");
-  printk("\t\tBoard: %s\n", CONFIG_BOARD);
+  printk("\t\tBoard: %s", CONFIG_BOARD);
   printk("\n========================================\n");
 
   if (!device_is_ready(uart)) {
