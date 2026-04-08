@@ -30,7 +30,6 @@
 //! LIBRARIES
 
 #include <zephyr/kernel.h>
-#include <zephyr/init.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/sys/sys_io.h>
@@ -49,30 +48,62 @@ LOG_MODULE_REGISTER(xheep_plic, CONFIG_INTC_LOG_LEVEL);
 
 //! CONSTANTS
 
-//* Devicetree Parameters
+//* Devicetree compat
 
 #define DT_DRV_COMPAT   esl_epfl_x_heep_plic
-#define PLIC_NODE       DT_INST(0, DT_DRV_COMPAT)
-#define PLIC_MAX_PRIO   DT_PROP(PLIC_NODE, riscv_max_priority)   /* 7  */
-#define PLIC_NUM_SRC    DT_PROP(PLIC_NODE, riscv_ndev)           /* 64 */
 
-//* Register Map
+//* Register offsets (from PLIC base)
 
-#define PLIC_BASE_ADDR  DT_REG_ADDR(PLIC_NODE)
-#define PLIC_BASE         DT_REG_ADDR(PLIC_NODE)
-#define PLIC_IP0          (PLIC_BASE + 0x000u)
-#define PLIC_IP1          (PLIC_BASE + 0x004u)
-#define PLIC_LE0          (PLIC_BASE + 0x008u)
-#define PLIC_LE1          (PLIC_BASE + 0x00Cu)
-#define PLIC_PRIO_BASE    (PLIC_BASE + 0x010u)
-#define PLIC_IE0_0        (PLIC_BASE + 0x200u)
-#define PLIC_IE0_1        (PLIC_BASE + 0x204u)
-#define PLIC_THRESHOLD0   (PLIC_BASE + 0x208u)
-#define PLIC_CC0          (PLIC_BASE + 0x20Cu)
+#define PLIC_OFF_IP0        0x000u
+#define PLIC_OFF_IP1        0x004u
+#define PLIC_OFF_LE0        0x008u
+#define PLIC_OFF_LE1        0x00Cu
+#define PLIC_OFF_PRIO_BASE  0x010u
+#define PLIC_OFF_IE0_0      0x200u
+#define PLIC_OFF_IE0_1      0x204u
+#define PLIC_OFF_THRESHOLD0 0x208u
+#define PLIC_OFF_CC0        0x20Cu
 
 //* Other
 
-#define PRIO_MASK                  0x7u
+#define PRIO_MASK  0x7u
+
+
+//! DRIVER STRUCTURES
+
+struct xheep_plic_config {
+  mem_addr_t base;
+  uint32_t   max_prio;
+  uint32_t   num_src;
+};
+
+struct xheep_plic_data {
+  /* No mutable state needed; placeholder for DEVICE_DT_INST_DEFINE */
+};
+
+
+//! DEVICE ACCESSOR
+
+/*
+  plic_cfg() — convenience accessor for the single X-HEEP PLIC instance.
+
+  The riscv_plic_* API is called by arch/riscv/core/irq_manage.c without a
+  device pointer, so we reach the config through DEVICE_DT_INST_GET(0).
+  X-HEEP has exactly one PLIC, so this is always correct.
+*/
+static inline const struct xheep_plic_config *plic_cfg(void) {
+  return DEVICE_DT_INST_GET(0)->config;
+}
+
+const struct device *riscv_plic_get_dev(void) {
+  /*
+    Required by arch/riscv/core/irq_manage.c.
+
+    Used in z_irq_spurious() to log "PLIC interrupt line causing the IRQ: %d (%p)".
+    Returning the real device pointer enables that debug path.
+  */
+  return DEVICE_DT_INST_GET(0);
+}
 
 
 //! HELPER FUNCTIONS
@@ -115,15 +146,16 @@ void riscv_plic_irq_enable(uint32_t irq) {
 
     Sets the corresponding bit in IE0_0 or IE0_1.
    */
+  const struct xheep_plic_config *cfg = plic_cfg();
   uint32_t src = plic_source_from_irq(irq);
 
-  if (src == 0 || src >= PLIC_NUM_SRC) {
+  if (src == 0 || src >= cfg->num_src) {
     return;
   }
 
   uint32_t reg_idx = src / 32u;
   uint32_t bit_pos = src % 32u;
-  uint32_t reg_addr = PLIC_IE0_0 + (reg_idx * 4u);
+  uint32_t reg_addr = cfg->base + PLIC_OFF_IE0_0 + (reg_idx * 4u);
 
   uint32_t val = sys_read32(reg_addr);
   val |= BIT(bit_pos);
@@ -137,15 +169,16 @@ void riscv_plic_irq_disable(uint32_t irq) {
 
     Clears the corresponding bit in IE0_0 or IE0_1.
   */
+  const struct xheep_plic_config *cfg = plic_cfg();
   uint32_t src = plic_source_from_irq(irq);
 
-  if (src == 0 || src >= PLIC_NUM_SRC) {
+  if (src == 0 || src >= cfg->num_src) {
     return;
   }
 
   uint32_t reg_idx = src / 32u;
   uint32_t bit_pos = src % 32u;
-  uint32_t reg_addr = PLIC_IE0_0 + (reg_idx * 4u);
+  uint32_t reg_addr = cfg->base + PLIC_OFF_IE0_0 + (reg_idx * 4u);
 
   uint32_t val = sys_read32(reg_addr);
   val &= ~BIT(bit_pos);
@@ -157,16 +190,16 @@ int riscv_plic_irq_is_enabled(uint32_t irq) {
   /*
     Check whether a PLIC interrupt source is enabled.
   */
-
+  const struct xheep_plic_config *cfg = plic_cfg();
   uint32_t src = plic_source_from_irq(irq);
 
-  if (src == 0 || src >= PLIC_NUM_SRC) {
+  if (src == 0 || src >= cfg->num_src) {
     return 0;
   }
 
   uint32_t reg_idx = src / 32u;
   uint32_t bit_pos = src % 32u;
-  uint32_t reg_addr = PLIC_IE0_0 + (reg_idx * 4u);
+  uint32_t reg_addr = cfg->base + PLIC_OFF_IE0_0 + (reg_idx * 4u);
 
   return (sys_read32(reg_addr) & BIT(bit_pos)) != 0;
 }
@@ -179,29 +212,28 @@ void riscv_plic_set_priority(uint32_t irq, uint32_t priority) {
     irq:      Source ID (1-63).
     priority: Priority value (0 = never fires, 1-7 active).
   */
-
+  const struct xheep_plic_config *cfg = plic_cfg();
   uint32_t src = plic_source_from_irq(irq);
 
-  if (src >= PLIC_NUM_SRC) {
+  if (src >= cfg->num_src) {
     return;
   }
 
-  if (priority > PLIC_MAX_PRIO) {
-    priority = PLIC_MAX_PRIO;
+  if (priority > cfg->max_prio) {
+    priority = cfg->max_prio;
   }
-  
-  uint32_t reg_addr = PLIC_PRIO_BASE + (src * 4u);
-  sys_write32(priority & PRIO_MASK, reg_addr);
+
+  sys_write32(priority & PRIO_MASK, cfg->base + PLIC_OFF_PRIO_BASE + (src * 4u));
 }
 
 
-unsigned int riscv_plic_get_irq() {
+unsigned int riscv_plic_get_irq(void) {
   /*
     Claim the highest-pending interrupt (read CC0).
 
     Returns source ID of the claimed interrupt (1-63), or 0 if none.
   */
-  return sys_read32(PLIC_CC0);
+  return sys_read32(plic_cfg()->base + PLIC_OFF_CC0);
 }
 
 
@@ -211,21 +243,7 @@ void riscv_plic_irq_complete(uint32_t irq_val) {
 
     Writes the source ID previously returned by riscv_plic_get_irq().
   */
-
-  sys_write32(irq_val, PLIC_CC0);
-}
-
-
-const struct device *riscv_plic_get_dev() {
- /*
-  Required by arch/riscv/core/irq_manage.c
-
-  The arch layer calls this in z_irq_spurious() and other places to
-  get the PLIC device pointer.  Since we use SYS_INIT (no struct device),
-  we return NULL.  The arch layer only uses this for debug logging
-  and multi-instance PLIC lookups — neither applies to X-HEEP.
- */
-  return NULL;
+  sys_write32(irq_val, plic_cfg()->base + PLIC_OFF_CC0);
 }
 
 
@@ -248,10 +266,10 @@ void k_sys_fatal_error_handler(unsigned int reason, const struct arch_esf *esf) 
 
 void xheep_plic_irq_handler(const void *arg) {
   /*
-    Dispatches the 2nd-level PLIC interrupts
+    Dispatches the 2nd-level PLIC interrupts.
   */
-
-  ARG_UNUSED(arg);
+  const struct device *dev = arg;
+  const struct xheep_plic_config *cfg = dev->config;
 
   //? DEBUG: raw character to UART (bypasses all software layers)
   ////sys_write32('!', 0x30080000u + 0x18u);
@@ -267,7 +285,7 @@ void xheep_plic_irq_handler(const void *arg) {
   ////  return;
   ////}
 
-  if (claim_id >= PLIC_NUM_SRC) {
+  if (claim_id >= cfg->num_src) {
     // Should never happen with 6-bit CC0
     LOG_ERR("PLIC: claim ID %u out of range", claim_id);
     riscv_plic_irq_complete(claim_id);
@@ -276,7 +294,7 @@ void xheep_plic_irq_handler(const void *arg) {
 
   /*
     Dispatch the 2nd-level ISR.
-  
+
     In Zephyr's multi-level interrupt scheme the PLIC sources
     occupy _sw_isr_table starting at CONFIG_2ND_LVL_ISR_TBL_OFFSET.
     The claim ID is used directly as an index from that base.
@@ -291,42 +309,44 @@ void xheep_plic_irq_handler(const void *arg) {
 
 //! INITIALIZATION FUNCTION
 
-static int xheep_plic_init() {
-  LOG_INF("X-HEEP PLIC @ 0x%08x: %u sources, max priority %u",
-    PLIC_BASE, PLIC_NUM_SRC, PLIC_MAX_PRIO);
+static int xheep_plic_init(const struct device *dev) {
+  const struct xheep_plic_config *cfg = dev->config;
+
+  LOG_INF("X-HEEP PLIC @ 0x%08lx: %u sources, max priority %u",
+    cfg->base, cfg->num_src, cfg->max_prio);
 
   /*
     1. Disable all interrupt sources for target 0.
   */
-  sys_write32(0u, PLIC_IE0_0);
-  sys_write32(0u, PLIC_IE0_1);
+  sys_write32(0u, cfg->base + PLIC_OFF_IE0_0);
+  sys_write32(0u, cfg->base + PLIC_OFF_IE0_1);
 
   /*
     2. Set all source priorities to 0 (disabled).
   */
-  for (unsigned int i = 0; i < PLIC_NUM_SRC; i++) {
-    sys_write32(0u, PLIC_PRIO_BASE + (i * 4u));
+  for (unsigned int i = 0; i < cfg->num_src; i++) {
+    sys_write32(0u, cfg->base + PLIC_OFF_PRIO_BASE + (i * 4u));
   }
 
   /*
     3. Set all sources to level-triggered (LE = 0).
   */
-  sys_write32(0u, PLIC_LE0);
-  sys_write32(0u, PLIC_LE1);
+  sys_write32(0u, cfg->base + PLIC_OFF_LE0);
+  sys_write32(0u, cfg->base + PLIC_OFF_LE1);
 
   /*
     4. Set priority threshold to 0 (allow any priority > 0).
   */
-  sys_write32(0u, PLIC_THRESHOLD0);
+  sys_write32(0u, cfg->base + PLIC_OFF_THRESHOLD0);
 
   /*
     5. Clear any stale claims by reading then completing.
   */
   unsigned int stale;
   do {
-    stale = sys_read32(PLIC_CC0);
+    stale = sys_read32(cfg->base + PLIC_OFF_CC0);
     if (stale != 0) {
-      sys_write32(stale, PLIC_CC0);
+      sys_write32(stale, cfg->base + PLIC_OFF_CC0);
     }
   } while (stale != 0);
 
@@ -338,7 +358,7 @@ static int xheep_plic_init() {
   */
 
   // Compile-time macro to populate the IRQ Table
-  IRQ_CONNECT(RISCV_IRQ_MEXT, 0, xheep_plic_irq_handler, NULL, 0);
+  IRQ_CONNECT(RISCV_IRQ_MEXT, 0, xheep_plic_irq_handler, DEVICE_DT_INST_GET(0), 0);
 
   // FALLBACK: Directly populate _sw_isr_table[11]
   ////extern struct _isr_table_entry _sw_isr_table[];
@@ -355,10 +375,28 @@ static int xheep_plic_init() {
 }
 
 
-//! INITIALIZATION MACRO
+//! INSTANTIATION MACRO
 
 /*
   PLIC initialization has to run before PRE_KERNEL_2 so that peripheral drivers
   (UART, GPIO, etc.) can register and enable their interrupts during their own init.
 */
-SYS_INIT(xheep_plic_init, PRE_KERNEL_1, CONFIG_INTC_INIT_PRIORITY);
+
+#define XHEEP_PLIC_INIT(n)                                            \
+  static const struct xheep_plic_config xheep_plic_cfg_##n = {        \
+    .base     = DT_INST_REG_ADDR(n),                                  \
+    .max_prio = DT_INST_PROP(n, riscv_max_priority),                  \
+    .num_src  = DT_INST_PROP(n, riscv_ndev),                          \
+  };                                                                  \
+  static struct xheep_plic_data xheep_plic_data_##n;                  \
+                                                                      \
+  DEVICE_DT_INST_DEFINE(n,                                            \
+    xheep_plic_init,                                                  \
+    NULL,                                                             \
+    &xheep_plic_data_##n,                                             \
+    &xheep_plic_cfg_##n,                                              \
+    PRE_KERNEL_1,                                                     \
+    CONFIG_INTC_INIT_PRIORITY,                                        \
+    NULL);  /* no standard interrupt_controller driver API in Zephyr */
+
+DT_INST_FOREACH_STATUS_OKAY(XHEEP_PLIC_INIT)

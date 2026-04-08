@@ -18,6 +18,7 @@
 #include <zephyr/sys/sys_io.h>
 #include <zephyr/sys/printk.h>
 #include <zephyr/irq.h>
+#include <zephyr/sw_isr_table.h>
 
 
 //! CONSTANTS
@@ -63,7 +64,7 @@ static volatile bool     isr_fired;
 static volatile uint32_t isr_source_id;
 static volatile uint32_t isr_count;
 
-// External IRQ handler from xheep_inct_plic.c
+// External IRQ handler from xheep_intc_plic.c
 extern void xheep_plic_irq_handler(const void *arg);
 
 // UART TX_EMPTY IRQ Handler
@@ -189,7 +190,6 @@ static int test_seq_2() {
   // Check ISR Vector Table before any changes
   printk("\tISR Vector Table check:\n");
 
-  extern struct _isr_table_entry _sw_isr_table[];
   printk("\t\t_sw_isr_table[11].isr = %p\n", _sw_isr_table[11].isr);
   printk("\t\txheep_plic_irq_handler = %p\n", xheep_plic_irq_handler);
   /* slot 15 = 12 + 3 = 2ND_LVL_ISR_TBL_OFFSET + source */
@@ -352,7 +352,7 @@ int main() {
 
   printk("\n========================================\n");
   printk("\tX-HEEP PLIC Verification Test");
-	printk("\t\tBoard: %s\n", CONFIG_BOARD);
+	printk("\t\tBoard: %s", CONFIG_BOARD);
   printk("\n========================================\n");
 
   int total_fail = 0;
