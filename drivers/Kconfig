@@ -7,3 +7,6 @@ rsource "serial/Kconfig"
 
 # Interrupt Controller child Kconfig
 rsource "interrupt_controller/Kconfig"
+
+# Counter child Kconfig
+rsource "timer/Kconfig"

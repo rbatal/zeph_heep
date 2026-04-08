@@ -1,0 +1,38 @@
+# author: rbatal (rodrigo.batal@gmail.com)
+
+description: |
+  X-HEEP user-domain general-purpose timer (lowRISC rv_timer IP, hart 0).
+
+  Same IP block as rv_timer_ao but located in the optional user peripheral
+  domain (0x30040000). Unlike rv_timer_ao, this timer's interrupt is routed
+  through FIC (Fast Interrupt Controller), not the PLIC.
+
+  Exposed to Zephyr as a counter device via the Zephyr counter API.
+  CTRL.ACTIVE_0 and CFG0.step must be written before the counter starts
+  ticking (the driver does this in its init routine).
+
+  Register map (from base, confirmed against rv_timer_regs.h):
+    0x000  CTRL          (ACTIVE_0 = bit 0: start/stop hart 0 counter)
+    0x100  CFG0          (prescale[11:0], step[23:16])
+    0x104  TIMER_V_LO    (counter lower 32 bits, auto-incremented by HW)
+    0x108  TIMER_V_HI    (counter upper 32 bits)
+    0x10C  COMPARE_LO    (compare lower 32 bits)
+    0x110  COMPARE_HI    (compare upper 32 bits)
+    0x114  INTR_ENABLE   (bit 0: IE_0)
+    0x118  INTR_STATE    (bit 0: IS_0, write-1-to-clear)
+    0x11C  INTR_TEST     (bit 0: T_0, write-only)
+
+compatible: "esl-epfl,x-heep-rv-timer"
+
+include: [base.yaml]
+
+properties:
+  reg:
+    required: true
+
+  clock-frequency:
+    type: int
+    required: true
+    description: |
+      Input clock frequency in Hz (100000000 for X-HEEP at 100 MHz).
+      With prescale=0 and step=1, the counter increments at the clock rate.

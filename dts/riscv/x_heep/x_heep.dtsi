@@ -51,14 +51,23 @@
 
 		/*
 		 * Machine Timer (Always-On domain)
-		 * LowRISC rv_timer @ 0x20050000
+		 * lowRISC rv_timer_ao @ 0x20050000
+		 *
+		 * CTRL (0x000) and CFG0 (0x100) are initialized in soc_early_init
+		 * (PRE_KERNEL_1) before the riscv_machine_timer driver reads mtime.
+		 * The "riscv,machine-timer" fallback compatible is required so that
+		 * Zephyr's riscv_machine_timer driver binds to this node via DT_INST.
 		 */
-		mtimer: timer@20050104 {
-			compatible = "riscv,machine-timer";
-			reg = <0x20050104 0x8>,   /* mtime */
-			      <0x2005010c 0x8>;   /* mtimecmp */
-			reg-names = "mtime", "mtimecmp";
-			interrupts-extended = <&hlic 7>;
+		mtimer: timer@20050000 {
+		  compatible = "esl-epfl,x-heep-rv-timer-ao", "riscv,machine-timer";
+		  reg = <0x20050000 0x4>,    /* ctrl     */
+		        <0x20050100 0x4>,    /* cfg0     */
+		        <0x20050104 0x8>,    /* mtime    */
+		        <0x2005010c 0x8>;    /* mtimecmp */
+		  reg-names = "ctrl", "cfg0", "mtime", "mtimecmp";
+		  clock-frequency = <100000000>;
+		  interrupts-extended = <&hlic 7>;
+		  status = "okay";
 		};
 
 		/*
@@ -94,6 +103,21 @@
 			current-speed = <256000>;
 			/* No interrupt-parent since PLIC is disabled */
 			status = "okay";
+		};
+
+		/*
+		 * rv_timer - lowRISC rv_timer @ 0x30040000 (user peripheral domain)
+		 *
+		 * Same IP as rv_timer_ao but in the user peripheral domain.
+		 * Interrupt is routed through the FIC (Fast Interrupt Controller),
+		 * not the PLIC, no interrupts-extended property needed here.
+		 * Driven by the custom esl-epfl,x-heep-rv-timer counter driver.
+		 */
+		rv_timer: timer@30040000 {
+		  compatible = "esl-epfl,x-heep-rv-timer";
+		  reg = <0x30040000 0x120>;
+		  clock-frequency = <100000000>;
+		  status = "okay";
 		};
 
 		/*

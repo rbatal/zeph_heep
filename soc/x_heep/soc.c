@@ -6,11 +6,15 @@
  * Includes startup prints to check the progress
  */
 
+
+#include <zephyr/kernel.h>
+#include <zephyr/device.h>
 #include <zephyr/init.h>
 #include <zephyr/sys/printk.h>
-#include <zephyr/device.h>
+#include <zephyr/sys/sys_io.h>
 #include <zephyr/drivers/uart.h>
 #include <stdint.h>
+#include "soc.h"
 
 //* Direct UART access for debugging
 #define UART_BASE   0x30080000
@@ -38,8 +42,15 @@ void debug_c_test(void)
     uart_puts("C!\n");
 }
 
-static int soc_early_init(void)
-{
+static int soc_early_init(void) {
+    /*
+      Activate rv_timer_ao before the machine timer driver reads mtime.
+      Prior to this, the counter stays at 0 forever, (k_busy_wait() never
+      ends up returning, as there is no increment).
+    */
+    sys_write32(XHEEP_RV_TIMER_AO_CFG0_STEP(1), XHEEP_RV_TIMER_AO_CFG0);
+    sys_write32(XHEEP_RV_TIMER_AO_CTRL_ACTIVE_0, XHEEP_RV_TIMER_AO_CTRL);
+
     uart_puts("K1\n");
     return 0;
 }

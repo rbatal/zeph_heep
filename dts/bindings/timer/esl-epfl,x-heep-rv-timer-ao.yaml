@@ -1,0 +1,52 @@
+# author: rbatal (rodrigo.batal@gmail.com)
+
+description: |
+  X-HEEP Always-On machine timer (lowRISC rv_timer IP, hart 0).
+
+  Acts as the RISC-V machine timer: mtime and mtimecmp drive the MTIP
+  (hart interrupt 7) used by Zephyr's riscv_machine_timer driver for the
+  system tick. CTRL and CFG0 must be initialized before mtime starts
+  counting. Zephyr's riscv_machine_timer driver does not do this, it is
+  handled by soc_early_init (PRE_KERNEL_1) in soc.c.
+
+  The "riscv,machine-timer" fallback compatible in the DTS node is required
+  so that Zephyr's riscv_machine_timer driver binds via DT_INST.
+
+  Register map (from base, confirmed against rv_timer_regs.h):
+    0x000  CTRL          (ACTIVE_0 = bit 0: start/stop hart 0 counter)
+    0x100  CFG0          (prescale[11:0], step[23:16])
+    0x104  TIMER_V_LO    (mtime lower 32 bits, auto-incremented by HW)
+    0x108  TIMER_V_HI    (mtime upper 32 bits)
+    0x10C  COMPARE_LO    (mtimecmp lower 32 bits)
+    0x110  COMPARE_HI    (mtimecmp upper 32 bits)
+    0x114  INTR_ENABLE   (bit 0: IE_0)
+    0x118  INTR_STATE    (bit 0: IS_0, write-1-to-clear)
+    0x11C  INTR_TEST     (bit 0: T_0, write-only)
+
+compatible: "esl-epfl,x-heep-rv-timer-ao"
+
+include: [base.yaml]
+
+properties:
+  reg:
+    required: true
+
+  reg-names:
+    required: true
+    description: |
+      Must be "ctrl", "cfg0", "mtime", "mtimecmp" in that order.
+
+  clock-frequency:
+    type: int
+    required: true
+    description: |
+      Input clock frequency in Hz (100000000 for X-HEEP at 100 MHz).
+      Determines the CFG0 prescale/step values needed so that mtime
+      increments at the desired rate. With prescale=0 and step=1,
+      mtime ticks once per clock cycle.
+
+  interrupts-extended:
+    required: true
+    description: |
+      Connection to the CPU hart interrupt controller.
+      Must be <&hlic 7> (machine timer interrupt, MTIP).
