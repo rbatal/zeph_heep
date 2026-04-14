@@ -46,11 +46,12 @@
 LOG_MODULE_REGISTER(xheep_plic, CONFIG_INTC_LOG_LEVEL);
 
 
-//! CONSTANTS
-
-//* Devicetree compat
+//! DRIVER COMPAT MACRO
 
 #define DT_DRV_COMPAT   esl_epfl_x_heep_plic
+
+
+//! CONSTANTS
 
 //* Register offsets (from PLIC base)
 

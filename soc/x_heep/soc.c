@@ -51,6 +51,19 @@ static int soc_early_init(void) {
     sys_write32(XHEEP_RV_TIMER_AO_CFG0_STEP(1), XHEEP_RV_TIMER_AO_CFG0);
     sys_write32(XHEEP_RV_TIMER_AO_CTRL_ACTIVE_0, XHEEP_RV_TIMER_AO_CTRL);
 
+    /*
+      ? The lowRISC rv_timer IP gates its interrupt output via INTR_ENABLE
+      ? This is a PRE-REQUISITE for any Zephyr-based project.
+      Many functionalities depend on this timer interrupt being available at
+      startup and Zephyr does not know how to access this register through its
+      riscv_machine_timer.c library (ignores its existence). Also, it is safe
+      to enable the interrupt as <mstatus.MIE>=0 at the moment, meaning that
+      the interrupt is gated until machine-interrupts are enabled.
+      This interrupt is also gated by <mtimecmp> (properly controlled by
+      Zephyr), so there is no risk related to this enable.
+    */
+    sys_write32(BIT(0), XHEEP_RV_TIMER_AO_INTR_ENABLE);
+
     uart_puts("K1\n");
     return 0;
 }

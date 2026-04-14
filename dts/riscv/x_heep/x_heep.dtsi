@@ -51,12 +51,15 @@
 
 		/*
 		 * Machine Timer (Always-On domain)
-		 * lowRISC rv_timer_ao @ 0x20050000
+		 * lowRISC rv_timer_ao
 		 *
 		 * CTRL (0x000) and CFG0 (0x100) are initialized in soc_early_init
 		 * (PRE_KERNEL_1) before the riscv_machine_timer driver reads mtime.
 		 * The "riscv,machine-timer" fallback compatible is required so that
 		 * Zephyr's riscv_machine_timer driver binds to this node via DT_INST.
+     *
+		 * Interrupt routes through FIC bit 0 (kTimer_1_fic_e) to
+		 * irq_i[16] - mcause 16 (hlic IRQ 16).
 		 */
 		mtimer: timer@20050000 {
 		  compatible = "esl-epfl,x-heep-rv-timer-ao", "riscv,machine-timer";
@@ -106,17 +109,30 @@
 		};
 
 		/*
-		 * rv_timer - lowRISC rv_timer @ 0x30040000 (user peripheral domain)
+		 * FIC - Fast Interrupt Controller (Always-On domain)
 		 *
+		 * Source N fires at mcause (16+N); the driver also controls
+		 * the corresponding MIE bits at the core level.
+		*/
+		fic: fast-intr-ctrl@20060000 {
+		  compatible = "esl-epfl,x-heep-fic";
+		  reg = <0x20060000 0x0C>;
+		  status = "okay";
+		};
+
+		/*
+		 * rv_timer (User domain)
+		 * lowRISC rv_timer
+     *
 		 * Same IP as rv_timer_ao but in the user peripheral domain.
-		 * Interrupt is routed through the FIC (Fast Interrupt Controller),
-		 * not the PLIC, no interrupts-extended property needed here.
-		 * Driven by the custom esl-epfl,x-heep-rv-timer counter driver.
-		 */
+		 * Interrupt routes through FIC bit 1 (kTimer_2_fic_e) to
+		 * irq_i[17] - mcause 17 (hlic IRQ 17).
+		*/
 		rv_timer: timer@30040000 {
 		  compatible = "esl-epfl,x-heep-rv-timer";
 		  reg = <0x30040000 0x120>;
 		  clock-frequency = <100000000>;
+		  interrupts-extended = <&hlic 17>;
 		  status = "okay";
 		};
 

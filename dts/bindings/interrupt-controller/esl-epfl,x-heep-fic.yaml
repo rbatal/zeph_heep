@@ -1,0 +1,40 @@
+# author: rbatal (rodrigo.batal@gmail.com)
+
+description: |
+  X-HEEP Fast Interrupt Controller (FIC)
+
+  Routes 16 fast interrupt sources directly to irq_i[31:16], (bypassing the
+  PLIC).
+  Source N maps to mcause (16+N). The driver also controls the corresponding
+  MIE CSR bits so the core takes the trap.
+
+  FIC source index table (from fast_intr_ctrl.sv):
+    0  kTimer_1_fic_e   — rv_timer channel 1
+    1  kTimer_2_fic_e   — rv_timer channel 2
+    2  kTimer_3_fic_e   — rv_timer channel 3
+    3  kDma_done_fic_e  — DMA transaction done
+    4  kSpi_fic_e       — SPI host
+    5  kSpiFlash_fic_e  — SPI flash controller
+    6  kGpio_0_fic_e    — AO GPIO 0
+    7  kGpio_1_fic_e    — AO GPIO 1
+    8  kGpio_2_fic_e    — AO GPIO 2
+    9  kGpio_3_fic_e    — AO GPIO 3
+   10  kGpio_4_fic_e    — AO GPIO 4
+   11  kGpio_5_fic_e    — AO GPIO 5
+   12  kGpio_6_fic_e    — AO GPIO 6
+   13  kGpio_7_fic_e    — AO GPIO 7
+   14  kDma_window_fic_e — DMA window done
+   15  kExt_peri_fic_e  — external peripheral
+
+  Register map (from base):
+    0x000  PENDING  (bit N set when source N is pending)
+    0x004  CLEAR    (write 1 in the corresponding bit to acknowledge and clear)
+    0x008  ENABLE   (bit N set for source N enable mask)
+
+compatible: "esl-epfl,x-heep-fic"
+
+include: [base.yaml]
+
+properties:
+  reg:
+    required: true

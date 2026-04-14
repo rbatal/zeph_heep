@@ -22,9 +22,9 @@ config PLIC
   default n
 
 # SW ISR table needs slots for:
-#   - L1: 12 RISC-V M-mode interrupt inputs (mip bits 0-11)
-#   - L2: 64 PLIC sources
-# Total = 12 + 64 = 76; use 96 for margin.
+#   - L1: 32 slots (standard RISC-V 0-11 + custom fast IRQs at mcause 16-31)
+#   - L2: 64 PLIC sources (start at index 32, to avoid no overlap with FIC IRQ slots)
+# Total = 32 + 64 = 96.
 config NUM_IRQS
   default 96 if XHEEP_PLIC
   default 64
@@ -33,9 +33,9 @@ config NUM_IRQS
 config MAX_IRQ_PER_AGGREGATOR
   default 64 if XHEEP_PLIC
 
-# L2 ISR table starts after the 12 L1 entries.
+# L2 ISR table starts after the 32 L1 entries.
 config 2ND_LVL_ISR_TBL_OFFSET
-  default 12 if XHEEP_PLIC
+  default 32 if XHEEP_PLIC
 
 # L1 IRQ line the PLIC is connected to (Machine External Interrupt = 11).
 config 2ND_LVL_INTR_00_OFFSET

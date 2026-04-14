@@ -5,6 +5,7 @@
   * Sequence 2: Counter running — mtime_lo increments between two reads
   * Sequence 3: k_busy_wait()  — 10 ms wait consumes ~1 000 000 mtime cycles (±20%)
   * Sequence 4: Kernel uptime  — k_uptime_get_32() advances after a timed wait
+  * Sequence 5: MTIP interrupt — MIE[7] (MTIE) is set; mtimecmp updated by Zephyr
 */
 
 
@@ -14,6 +15,7 @@
 #include <zephyr/device.h>
 #include <zephyr/sys/sys_io.h>
 #include <zephyr/sys/printk.h>
+#include <zephyr/arch/riscv/csr.h>
 
 
 //! CONSTANTS
@@ -24,6 +26,8 @@
 #define RV_TIMER_AO_CFG0        (RV_TIMER_AO_BASE + 0x100U)
 #define RV_TIMER_AO_MTIME_LO    (RV_TIMER_AO_BASE + 0x104U)
 #define RV_TIMER_AO_MTIME_HI    (RV_TIMER_AO_BASE + 0x108U)
+#define RV_TIMER_AO_MTIMECMP_LO (RV_TIMER_AO_BASE + 0x10CU)
+#define RV_TIMER_AO_MTIMECMP_HI (RV_TIMER_AO_BASE + 0x110U)
 #define RV_TIMER_AO_INTR_ENABLE (RV_TIMER_AO_BASE + 0x114U)
 #define RV_TIMER_AO_INTR_STATE  (RV_TIMER_AO_BASE + 0x118U)
 
@@ -77,13 +81,19 @@ static int test_seq_1() {
     printk("[FAIL] CFG0 unexpected (prescale=%u, step=%u)\n", prescale, step); fail++;
   }
 
-  // INTR_ENABLE: must be 0 (machine timer interrupt managed by Zephyr driver, not this IP reg)
+  /*
+    INTR_ENABLE bit 0 must be 1: set by soc_early_init.
+    Without it, the machine timer ISR never fires regardless of mtimecmp.
+  */
   uint32_t ie = sys_read32(RV_TIMER_AO_INTR_ENABLE);
-  printk("\tINTR_ENABLE = 0x%08x  (expect 0x00000000)\n", ie);
-  if (ie == 0U) {
-    printk("[PASS] INTR_ENABLE=0\n"); pass++;
-  } else {
-    printk("[FAIL] INTR_ENABLE non-zero (0x%08x)\n", ie); fail++;
+  printk("\tINTR_ENABLE = 0x%08x  (expect 0x00000001)\n", ie);
+  if (ie & BIT(0)) {
+    printk("[PASS] INTR_ENABLE bit 0 set — interrupt output enabled\n");
+    pass++;
+  }
+  else {
+    printk("[FAIL] INTR_ENABLE bit 0 clear — MTIP will never assert\n");
+    fail++;
   }
 
   printk("\nResult: %d passed, %d failed\n", pass, fail);
@@ -181,6 +191,74 @@ static int test_seq_4() {
 }
 
 
+static int test_seq_5() {
+  int pass = 0, fail = 0;
+
+  printk("\n--- MTIP Interrupt Test Sequence ---\n");
+  printk("[INFO] Verifying MIE[7] (MTIE) is set and mtimecmp is being updated by Zephyr\n");
+
+  /*
+    MIE[7] = MTIE (Machine Timer Interrupt Enable).
+    Zephyr's riscv_machine_timer driver sets this during sys_clock_driver_init.
+    If clear, the machine timer ISR will never fire and uptime cannot advance.
+   */
+  /*
+    mstatus.MIE (bit 3) is the global interrupt gate — BOTH mstatus.MIE
+    AND mie[7] must be set for the machine timer interrupt to be delivered.
+  */
+  unsigned long mstatus = csr_read(mstatus);
+  printk("\tmstatus = 0x%08lx  (bit 3 = MIE = %u, expect 1)\n", mstatus, !!(mstatus & BIT(3)));
+  if (mstatus & BIT(3)) {
+    printk("[PASS] mstatus.MIE set — interrupts globally enabled\n");
+    pass++;
+  }
+  else {
+    printk("[FAIL] mstatus.MIE clear — no interrupt can fire regardless of mie\n");
+    fail++;
+  }
+
+  unsigned long mie = csr_read(mie);
+  printk("\tMIE = 0x%08lx  (bit 7 = MTIE = %u, expect 1)\n", mie, !!(mie & BIT(7)));
+  if (mie & BIT(7)) {
+    printk("[PASS] MTIE set — machine timer interrupts enabled\n");
+    pass++;
+  }
+  else {
+    printk("[FAIL] MTIE clear — Zephyr tick ISR will not fire\n");
+    fail++;
+  }
+
+  /*
+    mtimecmp must change over time: Zephyr reprograms it on every tick
+    to schedule the next timer interrupt (useful for scheduling purposes).
+    Read, busy-wait, read again. If Zephyr is ticking, the value will advance.
+  */
+  uint32_t cmp0_lo = sys_read32(RV_TIMER_AO_MTIMECMP_LO);
+  uint32_t cmp0_hi = sys_read32(RV_TIMER_AO_MTIMECMP_HI);
+  
+  /* 30 ms — spans at least one kernel tick (default - 10 ms) */
+  k_busy_wait(30000U);
+  uint32_t cmp1_lo = sys_read32(RV_TIMER_AO_MTIMECMP_LO);
+  uint32_t cmp1_hi = sys_read32(RV_TIMER_AO_MTIMECMP_HI);
+
+  printk("\tmtimecmp before: hi=0x%08x lo=0x%08x\n", cmp0_hi, cmp0_lo);
+  printk("\tmtimecmp after:  hi=0x%08x lo=0x%08x\n", cmp1_hi, cmp1_lo);
+
+  bool changed = (cmp1_lo != cmp0_lo) || (cmp1_hi != cmp0_hi);
+  if (changed) {
+    printk("[PASS] mtimecmp was updated — Zephyr tick ISR is running\n");
+    pass++;
+  }
+  else {
+    printk("[FAIL] mtimecmp unchanged — tick ISR may not be firing\n");
+    fail++;
+  }
+
+  printk("\nResult: %d passed, %d failed\n", pass, fail);
+  return fail;
+}
+
+
 //! MAIN
 
 int main() {
@@ -195,6 +273,7 @@ int main() {
   total_fail += test_seq_2();
   total_fail += test_seq_3();
   total_fail += test_seq_4();
+  total_fail += test_seq_5();
 
   printk("\n========================================\n");
   if (total_fail == 0) {

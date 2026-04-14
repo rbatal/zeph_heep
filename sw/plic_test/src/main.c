@@ -192,8 +192,8 @@ static int test_seq_2() {
 
   printk("\t\t_sw_isr_table[11].isr = %p\n", _sw_isr_table[11].isr);
   printk("\t\txheep_plic_irq_handler = %p\n", xheep_plic_irq_handler);
-  /* slot 15 = 12 + 3 = 2ND_LVL_ISR_TBL_OFFSET + source */
-  printk("\t\t_sw_isr_table[15].isr = %p\n", _sw_isr_table[15].isr);
+  /* slot 35 = 32 + 3 = 2ND_LVL_ISR_TBL_OFFSET + source */
+  printk("\t\t_sw_isr_table[35].isr = %p\n", _sw_isr_table[35].isr);
   printk("\t\ttest_uart_tx_empty_isr = %p\n", test_uart_tx_empty_isr);
   
   // FALLBACK: Hardcoding ISR Vector Table

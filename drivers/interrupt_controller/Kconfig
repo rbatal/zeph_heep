@@ -18,3 +18,12 @@ config XHEEP_PLIC
 
     This driver provides the riscv_plic_* API using the correct
     compact register offsets.
+
+config XHEEP_FIC
+  bool "X-HEEP Fast Interrupt Controller"
+  default y
+  depends on DT_HAS_ESL_EPFL_X_HEEP_FIC_ENABLED
+  help
+    Custom FIC driver for the X-HEEP platform.
+    Routes 16 interrupt sources to the core's fast IRQ lines irq_i[31:16]
+    (mcause 16-31), bypassing the PLIC.

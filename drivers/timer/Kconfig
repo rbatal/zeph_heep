@@ -5,9 +5,9 @@
 config XHEEP_RV_TIMER
   bool "X-HEEP Timer(s)"
   default y
-  depends on DT_HAS_ESL_EPFL_XHEEP_RV_TIMER_ENABLED
+  depends on DT_HAS_ESL_EPFL_X_HEEP_RV_TIMER_ENABLED
   select COUNTER
   help
     Enable the driver for the lowRISC rv_timer IP in the X-HEEP
     user peripheral domain. Provides the Zephyr counter API (start, stop,
-    get_value, get_freq). Alarm support requires FIC (pending).
+    get_value, get_freq, set_channel_alarm, cancel_channel_alarm).
