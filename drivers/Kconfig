@@ -10,3 +10,6 @@ rsource "interrupt_controller/Kconfig"
 
 # Counter child Kconfig
 rsource "timer/Kconfig"
+
+# GPIO child Kconfig
+rsource "gpio/Kconfig"

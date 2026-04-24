@@ -1,0 +1,14 @@
+# author: rbatal (rodrigo.batal@gmail.com)
+
+description: >
+  X-HEEP GPIO_USER
+
+  24 GPIO pins. Pins are wired to PLIC interrupt sources 9-32
+  and support edge and level interrupts via the X-HEEP custom PLIC.
+  
+  Interrupts are declared via interrupt-parent = <&plic> and
+  interrupts = <source priority> (one entry per IRQ-capable pin).
+
+compatible: "esl-epfl,x-heep-gpio"
+
+include: [base.yaml, gpio-controller.yaml]

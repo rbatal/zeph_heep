@@ -1,0 +1,14 @@
+# author: rbatal (rodrigo.batal@gmail.com)
+
+description: >
+  X-HEEP GPIO_AO Controller
+
+  8 GPIO pins. Pins are wired to FIC sources 6-13 (mcause 22-29) and support
+  edge and level interrupts through the native Zephyr interrupt functions.
+  
+  Each pin has a dedicated hlic IRQ (mcause = 22+pin).
+  Interrupts are declared via interrupts-extended = <&hlic 22>...<&hlic 29>.
+
+compatible: "esl-epfl,x-heep-gpio-ao"
+
+include: [base.yaml, gpio-controller.yaml]

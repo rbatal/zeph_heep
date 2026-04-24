@@ -1,0 +1,18 @@
+#
+# GPIO driver Kconfig
+#
+
+config XHEEP_GPIO
+  bool "X-HEEP GPIO Controller (PULP Platform GPIO)"
+  default y
+  depends on DT_HAS_ESL_EPFL_X_HEEP_GPIO_ENABLED || \
+             DT_HAS_ESL_EPFL_X_HEEP_GPIO_AO_ENABLED
+  select GPIO
+  help
+    Custom GPIO driver for the X-HEEP platform.
+    This one peripheral is directly from the PULP repo.
+    Supports two hardware instances:
+      esl-epfl,x-heep-gpio-ao
+        Always-On GPIO (8 pins). Interrupt lines tied to FIC (6-13).
+      esl-epfl,x-heep-gpio
+        User-domain GPIO (24 pins). Interrupt lines tied to PLIC (9-32).

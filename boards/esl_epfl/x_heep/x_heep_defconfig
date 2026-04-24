@@ -31,6 +31,12 @@ CONFIG_GEN_SW_ISR_TABLE=y
 CONFIG_PLIC=n
 CONFIG_XHEEP_PLIC=y
 
+# FIC sources 0-15 occupy hlic IRQs 16-31.
+# L2 (PLIC) ISR table entries start after all 32 L1 hlic slots.
+# With offset=32, PLIC source N lands at table[32+N].
+# NUM_IRQS=96 = 32 L1 + 64 L2.
+CONFIG_2ND_LVL_ISR_TBL_OFFSET=32
+
 # At least the CV32E40P core requires 256-byte alignment of
 # its trap vector (possibly also the rest of OpenTitan cores).
 CONFIG_RISCV_TRAP_HANDLER_ALIGNMENT=256
@@ -60,3 +66,9 @@ CONFIG_EARLY_CONSOLE=y
 
 # Enable stdout -> console redirection for printf()
 CONFIG_STDOUT_CONSOLE=y
+
+# ============================================================
+# GPIO Configuration
+# ============================================================
+CONFIG_GPIO=y
+CONFIG_XHEEP_GPIO=y
