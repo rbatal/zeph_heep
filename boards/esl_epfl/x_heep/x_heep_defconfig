@@ -68,6 +68,13 @@ CONFIG_EARLY_CONSOLE=y
 CONFIG_STDOUT_CONSOLE=y
 
 # ============================================================
+# Scheduler Configuration
+# ============================================================
+CONFIG_NUM_PREEMPT_PRIORITIES=15
+CONFIG_TIMESLICE_SIZE=1
+CONFIG_TIMESLICE_PRIORITY=0
+
+# ============================================================
 # GPIO Configuration
 # ============================================================
 CONFIG_GPIO=y
