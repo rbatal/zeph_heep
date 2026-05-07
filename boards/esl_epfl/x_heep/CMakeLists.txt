@@ -11,16 +11,16 @@
 # Zephyr's native objcopy cannot produce the .hex so the script is still
 # needed integrated into the toolchain.
 #
-# Output: build/zephyr/zephyr_xheep.hex
+# Output: build/zephyr/zephyr.hex
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 add_custom_command(
-  OUTPUT  "${CMAKE_BINARY_DIR}/zephyr/zephyr_xheep.hex"
+  OUTPUT  "${CMAKE_BINARY_DIR}/zephyr/zephyr.hex"
   COMMAND "${Python3_EXECUTABLE}"
-          "${ZEPHYR_ZEPH_HEEP_MODULE_DIR}/elf2xheep.py"
+          "${ZEPHYR_ZEPH_HEEP_MODULE_DIR}/arch/riscv/x_heep/elf2xheep.py"
           "${CMAKE_BINARY_DIR}/zephyr/zephyr.elf"
-          "${CMAKE_BINARY_DIR}/zephyr/zephyr_xheep.hex"
+          "${CMAKE_BINARY_DIR}/zephyr/zephyr.hex"
           --no-boot-vector
   DEPENDS "${CMAKE_BINARY_DIR}/zephyr/zephyr.elf"
   COMMENT "Generating X-HEEP $readmemh hex"
@@ -28,5 +28,5 @@ add_custom_command(
 )
 
 add_custom_target(xheep_hex ALL
-  DEPENDS "${CMAKE_BINARY_DIR}/zephyr/zephyr_xheep.hex"
+  DEPENDS "${CMAKE_BINARY_DIR}/zephyr/zephyr.hex"
 )
