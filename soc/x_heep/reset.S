@@ -22,7 +22,7 @@
 //* System clock
 #define REFERENCE_CLOCK_HZ  100000000
 
-.section .text, "ax"
+.section .reset, "ax"
 .align 2
 
 .macro DEBUG_CHAR char

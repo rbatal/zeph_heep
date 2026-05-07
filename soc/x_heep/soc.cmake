@@ -3,4 +3,4 @@
 #
 
 # Set SOC_LINKER_SCRIPT early so Zephyr finds it
-set(SOC_LINKER_SCRIPT ${ZEPHYR_BASE}/include/zephyr/arch/riscv/common/linker.ld CACHE INTERNAL "")
+set(SOC_LINKER_SCRIPT ${ZEPHYR_ZEPH_HEEP_MODULE_DIR}/arch/riscv/x_heep/linker.ld CACHE INTERNAL "")

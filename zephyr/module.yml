@@ -1,4 +1,4 @@
-name: z_heep
+name: zeph_heep
 build:
   cmake: .
   kconfig: Kconfig
