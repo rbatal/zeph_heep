@@ -19,8 +19,21 @@
 #define UART_WDATA      (UART_BASE + 0x18)
 #define UART_FIFO_CTRL  (UART_BASE + 0x1C)
 
-//* System clock
-#define REFERENCE_CLOCK_HZ  100000000
+/*
+  System clock and UART baudrate defaults.
+
+  PYNQ-Z2 FPGA : f_clk = 15 MHz, baud = 115200
+                 NCO = round(115200 * 2^20 / 15e6) = 0x1F75
+  Verilator sim: f_clk = 100 MHz, baud = 256000
+                 NCO = round(256000 * 2^20 / 100e6) = 0x0A7C
+*/
+#if defined(CONFIG_XHEEP_FPGA_PYNQZ2)
+  #define REFERENCE_CLOCK_HZ  15000000
+  #define UART_NCO            0x1F75
+#else
+  #define REFERENCE_CLOCK_HZ  100000000
+  #define UART_NCO            0x0A7C
+#endif
 
 .section .reset, "ax"
 .align 2
@@ -51,7 +64,7 @@ __reset:
     sw t1, 0(t0)
     
     li t0, UART_CTRL
-    li t1, 0x0A7C0003
+    li t1, ((UART_NCO) << 16) | 0x3
     sw t1, 0(t0)
 
     DEBUG_CHAR '0'

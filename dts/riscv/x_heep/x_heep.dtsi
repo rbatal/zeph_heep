@@ -7,7 +7,19 @@
  * Notes:
  *  1 - Custom OpenTitan UART driver (differs from the one in Zephyr sources)
  *  2 - Custom OpenTitan PLIC driver (none available in Zephyr sources)
- */
+ *
+ * Clock selection (CONFIG_XHEEP_FPGA_PYNQZ2):
+ *   PYNQ-Z2: Sysclk 15 MHz, UART 115200 baud
+ *   Verilator: Sysclk 100 MHz, UART 256000 baud
+*/
+
+#if defined(CONFIG_XHEEP_FPGA_PYNQZ2)
+  #define XHEEP_CLK_HZ    15000000
+  #define XHEEP_UART_BAUD 115200
+#else
+  #define XHEEP_CLK_HZ    100000000
+  #define XHEEP_UART_BAUD 256000
+#endif
 
 / {
 	#address-cells = <1>;
@@ -25,7 +37,7 @@
 			reg = <0>;
 			riscv,isa = "rv32i_zicsr";
 			mmu-type = "riscv,none";
-			clock-frequency = <100000000>;
+			clock-frequency = <XHEEP_CLK_HZ>;
 			status = "okay";
 
 			hlic: interrupt-controller {
@@ -68,7 +80,7 @@
 		        <0x20050104 0x8>,    /* mtime    */
 		        <0x2005010c 0x8>;    /* mtimecmp */
 		  reg-names = "ctrl", "cfg0", "mtime", "mtimecmp";
-		  clock-frequency = <100000000>;
+		  clock-frequency = <XHEEP_CLK_HZ>;
 		  interrupts-extended = <&hlic 7>;
 		  status = "okay";
 		};
@@ -102,8 +114,8 @@
 		uart0: serial@30080000 {
 			compatible = "esl-epfl,x-heep-uart";
 			reg = <0x30080000 0x40>;
-			clock-frequency = <100000000>;
-			current-speed = <256000>;
+			clock-frequency = <XHEEP_CLK_HZ>;
+			current-speed = <XHEEP_UART_BAUD>;
 			/* No interrupt-parent since PLIC is disabled */
 			status = "okay";
 		};
@@ -131,7 +143,7 @@
 		rv_timer: timer@30040000 {
 		  compatible = "esl-epfl,x-heep-rv-timer";
 		  reg = <0x30040000 0x120>;
-		  clock-frequency = <100000000>;
+		  clock-frequency = <XHEEP_CLK_HZ>;
 		  interrupts-extended = <&hlic 17>;
 		  status = "okay";
 		};

@@ -4,3 +4,11 @@
 
 config BOARD_X_HEEP
 	select SOC_X_HEEP
+
+config XHEEP_FPGA_PYNQZ2
+	bool "PYNQ-Z2 FPGA target (15 MHz system clock)"
+	default n
+	help
+    Build configured for the PYNQ-Z2 FPGA implementation.
+	  System clock set to 15MHz at devicetree level.
+    UART baudrate set to 115200 at devicetree level.
